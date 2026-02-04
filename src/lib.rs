@@ -1,19 +1,45 @@
+//! Biblioteca principal do Minigrep.
+//!
+//! Este módulo contém a lógica de configuração e busca do programa.
+//! 
+//! # Licença
+//! Este projeto é uma adaptação do tutorial do livro "The Rust Programming Language".
+//! Código licenciado sob MIT/Apache 2.0, seguindo as licenças do Rust e do livro.
+
 use std::{error::Error, fs};
 
+/// Enum que representa os argumentos opcionais do programa.
 #[derive(Debug, PartialEq)]
 pub enum Arguments {
     CaseInsensitive,
+    /// Nenhum argumento especial fornecido.
     None
 } 
 
+/// Estrutura que armazena a configuração do programa.
+/// 
+/// Contém o termo de busca, o caminho do arquivo e argumentos opcionais.
 pub struct Config {
+    /// Termo a ser buscado no arquivo.
     pub query: String,
+    /// Caminho do arquivo onde a busca será realizada.
     pub file_path: String,
+    /// Argumentos opcionais (ex: busca case-insensitive).
     pub arguments: Arguments
 }
 
 
 impl Config {
+    /// Constrói uma nova configuração a partir dos argumentos da linha de comando.
+    /// 
+    /// # Argumentos
+    /// * `args` - Slice contendo os argumentos da linha de comando
+    /// 
+    /// # Retorno
+    /// Retorna `Ok(Config)` se os argumentos forem válidos, ou `Err` com mensagem de erro.
+    /// 
+    /// # Erros
+    /// Retorna erro se não houver argumentos suficientes (mínimo: query e file_path).
     pub fn build(args: &[String]) -> Result<Config, &'static str> {
         if args.len() < 3 { return Err("not enough arguments") }
 
@@ -30,6 +56,13 @@ impl Config {
         Ok(Config {query, file_path, arguments})
     }
 
+    /// Executa a busca no arquivo configurado.
+    /// 
+    /// Lê o conteúdo do arquivo e realiza a busca pelo termo,
+    /// imprimindo as linhas que contêm o termo buscado.
+    /// 
+    /// # Retorno
+    /// Retorna `Ok(())` em caso de sucesso, ou `Err` com o erro ocorrido.
     pub fn run(&self) -> Result<(), Box<dyn Error>>{
         let contents = fs::read_to_string(&self.file_path)?;
 
@@ -46,6 +79,13 @@ impl Config {
         Ok(())
     }
 
+    /// Verifica e interpreta os argumentos opcionais fornecidos.
+    /// 
+    /// # Argumentos
+    /// * `args` - String contendo os argumentos opcionais
+    /// 
+    /// # Retorno
+    /// Retorna o tipo de argumento identificado.
     fn check_arguments(args: &String) -> Arguments {
         let mut arguments = Arguments::None;
         
@@ -59,6 +99,14 @@ impl Config {
     
 }
 
+/// Realiza uma busca case-sensitive no conteúdo fornecido.
+/// 
+/// # Argumentos
+/// * `query` - Termo a ser buscado
+/// * `contents` - Conteúdo onde a busca será realizada
+/// 
+/// # Retorno
+/// Retorna um vetor com as linhas que contêm o termo buscado.
 pub fn search<'a>(
     query: &str,
     contents: &'a str
@@ -72,6 +120,16 @@ pub fn search<'a>(
     results
 }
 
+/// Realiza uma busca case-insensitive no conteúdo fornecido.
+/// 
+/// Converte tanto o termo quanto cada linha para minúsculas antes de comparar.
+/// 
+/// # Argumentos
+/// * `query` - Termo a ser buscado (será convertido para minúsculas)
+/// * `contents` - Conteúdo onde a busca será realizada
+/// 
+/// # Retorno
+/// Retorna um vetor com as linhas originais que contêm o termo buscado.
 pub fn search_case_insesitive<'a>(
     query: &str,
     contents: &'a str
