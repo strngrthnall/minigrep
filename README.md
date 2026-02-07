@@ -36,7 +36,7 @@ cargo run -- <termo_busca> <arquivo> [opções]
 
 | Opção | Descrição |
 |-------|-----------|
-| `i` | Busca case-insensitive (ignora maiúsculas/minúsculas) |
+| `IGNORE_CASE` | Busca case-insensitive (ignora maiúsculas/minúsculas) |
 
 ### 💡 Exemplos
 
