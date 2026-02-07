@@ -6,15 +6,8 @@
 //! Este projeto é uma adaptação do tutorial do livro "The Rust Programming Language".
 //! Código licenciado sob MIT/Apache 2.0, seguindo as licenças do Rust e do livro.
 
-use std::{error::Error, fs};
+use std::{error::Error, fs, env};
 
-/// Enum que representa os argumentos opcionais do programa.
-#[derive(Debug, PartialEq)]
-pub enum Arguments {
-    CaseInsensitive,
-    /// Nenhum argumento especial fornecido.
-    None
-} 
 
 /// Estrutura que armazena a configuração do programa.
 /// 
@@ -25,7 +18,7 @@ pub struct Config {
     /// Caminho do arquivo onde a busca será realizada.
     pub file_path: String,
     /// Argumentos opcionais (ex: busca case-insensitive).
-    pub arguments: Arguments
+    pub ignore_case: bool
 }
 
 
@@ -40,20 +33,24 @@ impl Config {
     /// 
     /// # Erros
     /// Retorna erro se não houver argumentos suficientes (mínimo: query e file_path).
-    pub fn build(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 3 { return Err("not enough arguments") }
+    pub fn build(mut args: impl Iterator<Item = String>) -> Result<Config, &'static str> {
+        args.next();
 
-        let query = args[1].clone();
-        let file_path = args[2].clone();
-        
-        let arguments = if args.len() > 3 {
-            Config::check_arguments(&args[3])
-        } else {
-            Arguments::None
+        let query = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a query string"),
         };
+
+        let file_path = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a file path"),
+        };
+        
+        
+        let ignore_case = env::var("IGNORE_CASE").is_ok();
     
 
-        Ok(Config {query, file_path, arguments})
+        Ok(Config {query, file_path, ignore_case})
     }
 
     /// Executa a busca no arquivo configurado.
@@ -66,7 +63,7 @@ impl Config {
     pub fn run(&self) -> Result<(), Box<dyn Error>>{
         let contents = fs::read_to_string(&self.file_path)?;
 
-        let results = if self.arguments == Arguments::CaseInsensitive {
+        let results = if self.ignore_case {
             search_case_insesitive(&self.query, &contents)
         } else {
             search(&self.query, &contents)
@@ -79,23 +76,6 @@ impl Config {
         Ok(())
     }
 
-    /// Verifica e interpreta os argumentos opcionais fornecidos.
-    /// 
-    /// # Argumentos
-    /// * `args` - String contendo os argumentos opcionais
-    /// 
-    /// # Retorno
-    /// Retorna o tipo de argumento identificado.
-    fn check_arguments(args: &String) -> Arguments {
-        let mut arguments = Arguments::None;
-        
-        if args.contains("i") {
-            arguments = Arguments::CaseInsensitive;
-        }
-        
-
-        arguments
-    }
     
 }
 
@@ -111,13 +91,10 @@ pub fn search<'a>(
     query: &str,
     contents: &'a str
 ) -> Vec<&'a str> {
-    let mut results: Vec<&str> = Vec::new();
-    for line in contents.lines() {
-        if line.contains(query) {
-            results.push(line);
-        }
-    }
-    results
+    contents
+        .lines()
+        .filter(|line| line.contains(query))
+        .collect()
 }
 
 /// Realiza uma busca case-insensitive no conteúdo fornecido.
@@ -135,14 +112,10 @@ pub fn search_case_insesitive<'a>(
     contents: &'a str
 ) -> Vec<&'a str> {
     let query = query.to_lowercase();
-    let mut results: Vec<&str> = Vec::new();
-    
-    for line in contents.lines() {
-        if line.to_lowercase().contains(&query) {
-            results.push(line);
-        }
-    }
-    results
+    contents
+        .lines()
+        .filter(|line| line.to_lowercase().contains(&query))
+        .collect()
 }
 
 #[cfg(test)]
@@ -177,14 +150,6 @@ Trust me.";
             vec!["Rust:", "Trust me."],
             search_case_insesitive(query, contents)
         );
-    }
-
-    #[test]
-    fn arguments_case_insensitive() {
-        let args = "i".to_string();
-        let result = Arguments::CaseInsensitive;
-
-        assert_eq!(Config::check_arguments(&args), result)
     }
 
 }
