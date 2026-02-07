@@ -45,7 +45,7 @@ cargo run -- <termo_busca> <arquivo> [opções]
 cargo run -- to poem.txt
 
 # 🔎 Busca ignorando maiúsculas/minúsculas
-cargo run -- to poem.txt i
+IGNORE_CASE=1 cargo run -- to poem.txt
 ```
 
 ---
